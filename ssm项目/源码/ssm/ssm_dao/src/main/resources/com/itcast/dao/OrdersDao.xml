@@ -1,0 +1,32 @@
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itcast.dao.OrdersDao">
+
+
+    <resultMap id="OrdersMap" type="orders">
+        <id property="id" column="id"/>
+        <result property="orderNum" column="orderNum"/>
+        <result property="orderTime" column="orderTime"/>
+        <result property="orderStatus" column="orderStatus"/>
+        <result property="productid" column="productid"/>
+        <!--多对一（一对一）的关系映射，配置需要的product中的内容-->
+        <association property="product" column="productid" javaType="product"
+                     select="com.itcast.dao.ProductDao.findById"/>
+        <!--多对一（一对一）的关系映射，配置需要的member中的内容-->
+        <association property="member" column="memberid" javaType="member"
+                     select="com.itcast.dao.MemberDao.findById"/>
+        <!--多对多的配置，加入中间表 ，利用子查询,传入查询条件-->
+        <collection property="travellers" ofType="traveller" column="id"
+                    select="com.itcast.dao.TravellerDao.findById"/>
+
+    </resultMap>
+        <select id="findAll" resultMap="OrdersMap">
+            SELECT  * from orders
+        </select>
+
+        <select id="findById" resultMap="OrdersMap" >
+             SELECT  * from orders where id = #{id}
+        </select>
+
+</mapper>

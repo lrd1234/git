@@ -1,0 +1,465 @@
+         it_ssm项目，前端使用了AdminLTE，
+		 
+	一：AdminLTE:AdminLTE是一款建立在bootstrap和jquery之上的开源的模板主题工具，它提供了一系列响应的、 可重复使用的组件，并内置了多个模板页面；
+	同时自适应多种屏幕分辨率，兼容PC和移动端。通 过AdminLTE，我们可以快速的创建一个响应式的Html5网站。
+	AdminLTE框架在网页架构与设计 上，有很大的辅助作用，尤其是前端架构设计师，用好AdminLTE 不但美观，而且可以免去写很大 CSS与JS的工作量
+	二.项目将会提交到git上
+	三.数据库的建表：
+	
+	四.
+	
+	
+	
+	
+	
+	
+	二：项目启动
+			
+		1.功能介绍 
+ 
+ 
+			 1.1主要讲解maven工程搭建，以及基于oracle数据库的商品表信息，并完成SSM整合。 
+			    1.创建maven项目，引入相关jar包坐标（pom.xml），创建目录（dao,domian等）
+				2.加入AdminLTE的文件夹（css,img,plugins） 和index.jsp 文件夹下有我们需求的js，jquery，等文件
+				
+			
+			1.2 商品查询 基于SSM整合基础上完成商品查询，要掌握主面页面main.jsp及商品显示页面product-list.jsp页面的创建。
+				3.编写domian，dao等代码（采用注解的方式）（根据习惯我是从后台往前台开发）
+				3.1查询所有产品
+				ProductDao：
+					@Select("select * from product")
+					List<Product> findAll();
+				ProductService:
+					List<Product> findAll();
+				ProductServiceImpl:
+					return productDao.findAll();
+				ProductController:
+					 ModelAndView mav = new ModelAndView();
+					List<Product> products = productService.findAll();
+					mav.addObject("products",products);
+					System.out.println(products);
+					mav.setViewName("product/product_list");
+					return mav;
+				注意：@Repository要加上，表明他是一个dao层接口，否则在service层将无法自动注入
+				
+				
+				
+				
+				注意：applicationContext.xml中需要配置的几大项：
+				3.1.1开启注解扫描
+				<context:component-scan base-Package="dao路径 service实现类路径"/>
+				3.1.2引入jdbcConfig.pproperties
+				<context:property-placeHolder location = "classpath:配置文件的名称"/> 配置文件统一方法resources中，如果有多级文件夹注意更改
+				3.1.3 配置数据库驱动
+				<bean class ="compooledDataSource" id dataSource>  使用的是c3p0连接池
+					<driverClass>
+					<url>
+					<username>
+					<password>
+				</>
+				3.1.4:配置sqlsessionbean工厂
+				<bean class = "SqlSessionfactoryBean">
+				<指明数据源> 就是上面
+				<别名配置>
+				
+				<!--后续在这里可能还需要引入pageHelper 分页工具 这里先不讲-->
+				</>
+				3.1.5如果有mapper映射文件 需要引入
+				<bean  class="Mapper">
+				
+				
+				3.1.5配置事务管理
+				<bean class="DataSourceTransactionalManager">
+				3.1.6配置事务通知
+				<tx:advice id   transaction_manager="与上面的事务管理id一致">
+				配置事务属性
+				<tx:method name="" >
+				</>
+				3.1.7:配置切面
+				<aop:config> 
+				配置切点
+				<aop:pointCut>
+				配置切点与通知的关联关系
+				<aop:advisor>
+				</>
+				
+				springMVC中的配置：
+				<扫包>
+				<视图解析器》
+				<过滤静态资源》
+				<开启注解配置》
+			
+			
+			
+			
+			1.3 商品添加  进一步巩固SSM整合，并完成商品添加功能，要注意事务操作以及product-add.jsp页面生成。
+			基础功能不做赘述
+			
+			
+			
+			1.4 订单查询 订单的查询操作，它主要完成简单的多表查询操作，查询订单时，需要查询出与订单关联的其它表中信息，所以大 家一定要了解订单及其它表关联关系 
+			注意多对多关系 我们会创建一个关联表，通过查询关联表的方法来找到我们要查询的数据
+			1对多，可以理解成1对1xml关键字：association 注解：@one，多对一：collection  @many
+			
+			
+			这里是我缩写的：
+			<resultMap id="OrdersMap" type="orders">    id可以任意写，但要注意与斜面查询的resultMap一致，type，起别名的话，就可以写对应的类名（大小写不敏感）
+				<id property="id" column="id"/>     property是bean中的属性，column是执行查询语句之后的映射   
+				<result property="orderNum" column="orderNum"/>
+				<result property="orderTime" column="orderTime"/>
+				<result property="orderStatus" column="orderStatus"/>
+				<result property="productid" column="productid"/>
+				<!--多对一（一对一）的关系映射，配置需要的product中的内容-->
+				<association property="product" column="productid" javaType="product"
+							 select="com.itcast.dao.ProductDao.findById"/>
+																		property是bean中的属性，column查询需要用到的列，javaType，这个值的属性 大小写不敏感）
+				<!--多对一（一对一）的关系映射，配置需要的member中的内容-->
+				<association property="member" column="memberid" javaType="member" 
+							 select="com.itcast.dao.MemberDao.findById"/>
+				<!--多对多的配置，加入中间表 ，利用子查询,传入查询条件-->
+				<collection property="travellers" ofType="traveller" column="id"      ofType值得是list或者set中装入的属性 select指引用哪一个方法
+							select="com.itcast.dao.TravellerDao.findById"/>
+
+			</resultMap>
+				<select id="findAll" resultMap="OrdersMap">
+					SELECT  * from orders
+				</select>
+			
+			
+			
+			travollerDao.xml  
+			<select id="findById" resultType="Traveller" parameterType="String">
+				SELECT * from traveller where id in (select travellerid from order_traveller where orderid = #{id})
+			</select>   
+	
+			------这里有一个子查询
+		
+			1.5 订单分页查询 订单分页查询，我们使用的是mybatis分页插件PageHelper，要掌握PageHelper的基本使用。
+
+
+
+				pageHelper的使用：
+				
+				导入依赖
+				<dependency>
+					<groupId>com.github.pagehelper</groupId>
+					<artifactId>pagehelper</artifactId>
+					<version>5.1.2</version>
+				</dependency>
+				
+				2.在spring的配置文件的sqlsession那个地方加上pagehelper的插件
+				
+				<!--配置pageHelper插件-->
+						<property name="plugins">
+							<array>
+								<bean class="com.github.pagehelper.PageInterceptor">
+									<property name="properties">
+										<!--使用下面的方式配置参数，一行配置一个 -->
+										<props>
+											<!--配置数据库-->
+											<prop key="helperDialect">oracle</prop>
+											<!--配置reasonable ：分页合理化参数，默认值为 false 。
+											 true 时， pageNum<=0 时会查询第一 页，
+											 pageNum>pages （超过总数时），会查询最后一页。
+											 默认 false 时，直接根据参数进行查询。 -->
+											<prop key="reasonable">true</prop>
+										</props>
+									</property>
+								</bean>
+							</array>
+						</property>
+						
+						
+				3.service中使用
+				 /*第一个参数：从第几页开始，第二个参数：每页显示多少数据*/
+					PageHelper.startPage(pageStart,pageSize);  pageStart起始页，pageSize，页面数据量
+				
+				
+
+
+
+
+
+			
+			
+			1.6 订单详情查询 订单详情是用于查询某一个订单的信息，这个知识点主要考核学生对复杂的多表查询操作的掌握。 
+			
+			1.7 Spring Security 概述  Spring Security是 Spring 项目组中用来提供安全认证服务的框架，它的使用很复杂，我们在课程中只介绍了 spring Security的基本操作，大家要掌握spring Security框架的配置及基本的认证与授权操作。 
+				1.导入依赖：
+				<dependency>
+					<groupId>org.springframework.security</groupId>
+					<artifactId>spring-security-web</artifactId>
+					<version>${spring.security.version}</version>
+				</dependency>
+				<dependency>
+					<groupId>org.springframework.security</groupId>
+					<artifactId>spring-security-config</artifactId>
+					<version>${spring.security.version}</version>
+				</dependency>
+				<dependency>
+					<groupId>org.springframework.security</groupId>
+					<artifactId>spring-security-core</artifactId>
+					<version>${spring.security.version}</version>
+				</dependency>
+				<dependency>
+					<groupId>org.springframework.security</groupId>
+					<artifactId>spring-security-taglibs</artifactId>
+					<version>${spring.security.version}</version>
+				</dependency>
+				
+				2.web.xml中配置filter
+				
+				 <!--这里的filter-name必须是springSecurityFilterChain,不可修改-->
+					<filter>
+						<filter-name>springSecurityFilterChain</filter-name>
+						<filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+					</filter>
+					<filter-mapping>
+						<filter-name>springSecurityFilterChain</filter-name>
+						<url-pattern>/*</url-pattern>
+					</filter-mapping>
+					<listener>
+					<listener-class>org.springframework.web.context.request.RequestContextListener</listener-class>
+					</listener>
+					
+					<context-param>
+						<param-name>contextConfigLocation</param-name>
+						<param-value>classpath*:spring-security.xml</param-value>
+					</context-param>
+				
+				3.spring-security.xml 配置
+				         
+								 <security:global-method-security  secured-annotations="enabled"/>
+								 这个配置是后面要使用权限控制，要配置的东西：还有pre-post-XXX,jsr-250 ,
+								 
+				<context:component-scan base-package="com.itcast.service.impl"/>
+					<!-- 配置不过滤的资源（静态资源及登录相关） -->
+					<security:http security="none" pattern="/pages/login.jsp"/>
+					<security:http security="none" pattern="/pages/failer.jsp"/>
+					<security:http security="none" pattern="/plugins/**"/>
+					<security:http security="none" pattern="/css/**"/>
+					<security:http security="none" pattern="/img/**"/>
+
+					<security:http auto-config="true" use-expressions="false">
+						<!-- 配置资料连接，表示任意路径都需要ROLE_USER权限 -->
+						<security:intercept-url pattern="/**"
+												access="ROLE_USER,ROLE_ADMIN"/>
+						<!-- 自定义登陆页面，login-page 自定义登陆页面
+						authentication-failure-url 用户权限校验失败之 后才会跳转到这个页面，
+						如果数据库中没有这个用户则不会跳转到这个页面。
+								default-target-url 登陆成功后跳转的页面。
+								注：登陆页面用户名固定 username，密码 password，action:login -->
+						<security:form-login login-page="/pages/login.jsp"
+											 login-processing-url="/login.do"
+											 username-parameter="username"
+											 password-parameter="password"
+											 authentication-failure-url="/pages/failer.jsp"
+											 default-target-url="/pages/main.jsp"/>
+						<!-- 登出， invalidate-session 是否删除session logout-url：登出处理链接 logout-successurl：登出成功页面             注：登出操作 只需要链接到 logout即可登出当前用户 -->
+						<security:logout invalidate-session="true"
+										 logout-url="/logout.do"
+										 logout-success-url="/pages/login.jsp"/>
+						<!-- 关闭CSRF,默认是开启的 ，跨域请求-->
+						<security:csrf disabled="true"/>
+					</security:http>
+
+					<security:authentication-manager>
+						<security:authentication-provider
+								user-service-ref="userService">
+							 <!--配置加密的方式 -->
+								<security:password-encoder ref="passwordEncoder"/>
+						</security:authentication-provider>
+					</security:authentication-manager>
+
+					<!--加密类  使用的算法是：bcrypt、-->
+					<bean class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder" id="passwordEncoder"/>
+					<bean id="webexpressionHandler" class="org.springframework.security.web.access.expression.DefaultWebSecurityExpressionHandler" />  如果你不想给use-expressions="false" 改成true，就加一句这个配置，使用表达式的意思
+					
+					4.因为账户密码 已经加密了  不能通过之前的未加密方式进入，所以，可以先建立一个测试类，将铭文所对应的密文打印出来之后保存在数据库中。
+					
+							测试类： private static BCryptPasswordEncoder bCryptPasswordEncoder=new BCryptPasswordEncoder();
+			public static String encodePassword(String password){
+				return bCryptPasswordEncoder.encode(password);
+			}
+
+			public static void main(String[] args) {
+				String password="1";
+				String pwd = encodePassword(password);
+			   //$2a$10$0u1RpZ.OEwhpD8CkAFrw.uBI12SQqyhFHmoNjNMtFW7NHtjRTWuCO 明文 ‘1’
+				System.out.print(pwd);
+				System.out.println(bCryptPasswordEncoder.matches(password, pwd));
+				
+				
+			5.service的接口 要继承UserDetailsService，所以在实现的时候才能到 loadUserByUsername方法
+			
+			UserService extends UserDetailsService
+			
+			6.userServiceImpl
+			
+			
+					@Override
+			public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+				UserInfo userInfo = userDao.findByUsername(username); //通过用户名来查找用户对象
+				List<Role> roles = userInfo.getRoles();  //获取角色信息
+				List<SimpleGrantedAuthority> authoritys = getAuthority(roles);  //简单的授权类
+				User user = new User(    //user不是我们定义的，他来自于spring安全认证中的user，他包含如下信息
+						userInfo.getUsername(),    //用户名
+						 userInfo.getPassword(),  //密码  {noop}表示解密"{noop}" + userInfo.getPassword()
+						userInfo.getStatus() == 0 ? false : true,     //状态吗
+						true, //设置账户是否过期
+						true, //设置凭证是否过期
+						true,  //是否设置了账户锁
+						authoritys);   //授权信息（也就是spring security中  admin = ROLE_ADMIN  user = ROLE_USER）
+
+				return user;
+			}
+
+			private List<SimpleGrantedAuthority> getAuthority(List<Role> roles) {
+				List<SimpleGrantedAuthority> authoritys = new ArrayList();
+				for (Role role : roles) {
+					authoritys.add(new SimpleGrantedAuthority("ROLE_"+role.getRoleName()));
+				}
+				return authoritys;
+			}
+			6.测试结果：
+			
+			1.8 用户管理  用户管理中我们会介绍基于spring Security的用户登录、退出操作。以及用户查询、添加、详情有等操作，这些功 能的练习是对前期SSM知识点的进一步巩固。 
+			
+			1.9 角色管理 角色管理主要完成角色查询、角色添加 
+			
+			1.10 资源权限管理 资源权限管理主要完成查询、添加操作，它的操作与角色管理类似，角色管理以及资源权限管理都是对权限管理的 补充。
+			
+			1.11 权限关联与控制 主要会讲解用户角色关联、角色权限关联，这两个操作是为了后续我们完成授权操作的基础，关于授权操作我们会 在服务器端及页面端分别讲解 
+			
+					1基于服务器的权限控制：可以通过权限控制，从而使某些方法只能被某些特点用户所使用：
+					第一步： <security:global-method-security  secured-annotations="enabled"/>
+						<!--服务器端的权限控制，第一步：开启jsr250注解的使用
+							如果把这个信息放在 security中的配置  那么只能对service层进行控制
+							jsr250-annotations="enabled" secured-annotations="enabled"
+						 -->
+					第二步.在指定的方法上面使用：
+					jsr-250  ：  @RolesAllowed("ADMIN")  填充可能有的权限
+					secured:     @Secured("ADMIN")
+					 pre-post-annotations:   可以使用的两种方式：指明用户权限额：@PreAuthorize("hasRole('Admin')")   指定特定用户使用的： @PreAuthorize("authentication.principal.username =='zhangsan'")
+			
+					2.基于客户端服务器的权限控制（让没有权限访问的页面都不展示 而不是提示出错.）
+					    导入依赖：<dependency>   <groupId>org.springframework.security</groupId>   <artifactId>spring-security-taglibs</artifactId>   <version>version</version> </dependency>
+						页面上增加security标签：
+						<%@taglib uri="http://www.springframework.org/security/tags" prefix="security"%> 
+						
+						在需要使用权限才能访问的属性上用夏利语句包裹：
+						<security:authorize access="权限" method="" url="" var=""></security:authorize> 
+						获取当前用户：
+						<security:authentication property="principal.username"/>
+					
+			
+				
+			1.12 AOP日志处理 AOP日志处理，我们使用spring AOP切面来完成系统级别的日志收集。 
+			
+					1.创建切面类处理日志：
+					package com.itcast.web;
+
+
+import com.itcast.domain.SysLog;
+import com.itcast.service.SysLogService;
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.annotation.After;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import javax.servlet.http.HttpServletRequest;
+import java.lang.reflect.Method;
+import java.util.Date;
+
+/*创建切面类处理日志*/
+@Component  /*不能指定他是否是web，service,dao层*/
+@Aspect  /*指明他是一个切面类*/
+public class LogAop {
+    private Date startTime; // 访问时间
+    private Class executionClass;// 访问的类
+    private Method executionMethod; // 访问的方法
+    // 主要获取访问时间、访问的类、访问的方法
+    @Autowired
+    private HttpServletRequest request;
+
+    @Autowired
+    private SysLogService sysLogService;
+
+    @Before("execution(* com.itcast.web.*.*(..)))")
+    public void doBefore(JoinPoint jp) throws NoSuchMethodException, SecurityException {
+        startTime = new Date(); // 访问时间
+        // 获取访问的类
+        executionClass = jp.getTarget().getClass();
+        // 获取访问的方法
+        String methodName = jp.getSignature().getName();// 获取访问的方法的名称
+
+        Object[] args = jp.getArgs();
+        // 获取访问的方法的参数
+        if (args == null || args.length == 0) {
+            // 无参数
+            executionMethod = executionClass.getMethod(methodName); // 只能获取无参数方法
+        } else {            // 有参数，就将args中所有元素遍历，获取对应的Class,装入到一个Class[]
+            Class[] classArgs = new Class[args.length];
+            for (int i = 0; i < args.length; i++) {
+                classArgs[i] = args[i].getClass();
+            }
+            executionMethod = executionClass.getMethod(methodName, classArgs);// 获取有参数方法
+        }
+    }
+
+    // 主要获取日志中其它信息，时长、ip、url...
+    @After("execution(* com.itcast.web.*.*(..))")
+    public void doAfter(JoinPoint jp) throws Exception {
+
+        // 获取类上的@RequestMapping对象
+        if (executionClass != SysLogController.class) {
+            RequestMapping classAnnotation = (RequestMapping) executionClass.getAnnotation(RequestMapping.class);
+            if (classAnnotation != null) {
+                // 获取方法上的@RequestMapping对象
+                RequestMapping methodAnnotation = executionMethod.getAnnotation(RequestMapping.class);
+
+                if (methodAnnotation != null) {
+
+                    String url = "";
+                    // 它的值应该是类上的@RequestMapping的value+方法上的 @RequestMapping的value
+
+                    url = classAnnotation.value()[0] + methodAnnotation.value()[0];
+
+                    SysLog sysLog = new SysLog();
+                    // 获取访问时长
+                    Long executionTime = new Date().getTime() - startTime.getTime();
+                    // 将sysLog对象属性封装
+                    sysLog.setExecutionTime(executionTime);
+                    sysLog.setUrl(url);                    // 获取ip
+                    String ip = request.getRemoteAddr();
+                    sysLog.setIp(ip);
+
+                    // 可以通过securityContext获取，也可以从request.getSession中获取
+                    SecurityContext context = SecurityContextHolder.getContext();
+                    // request.getSession().getAttribute("SPRING_SECURITY_CONTEXT")
+                    String username = ((User) (context.getAuthentication().getPrincipal())).getUsername();
+                    sysLog.setUsername(username);
+
+                    sysLog.setMethod("[类名]" + executionClass.getName() + "[方法名]" + executionMethod.getName());
+
+                    sysLog.setVisitTime(startTime);
+
+                    // 调用Service，调用dao将sysLog insert数据库
+                    sysLogService.saveLog(sysLog);
+                }
+            }
+
+
+        }
+    }
+}
+
+2.
+		
+

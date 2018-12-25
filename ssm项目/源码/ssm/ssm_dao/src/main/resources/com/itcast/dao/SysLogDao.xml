@@ -1,0 +1,22 @@
+ <!DOCTYPE mapper
+         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ <mapper namespace="com.itcast.dao.SysLogDao">
+    <resultMap id="sysLogMap" type="sysLog">
+        <id property="id" column="id"/>
+        <result property="visitTime" column="visitTime"/>
+        <result property="username" column="username"/>
+        <result property="ip" column="ip"/>
+        <result property="url" column="url"/>
+        <result property="executionTome" column="executionTome"/>
+        <result property="method" column="method"/>
+    </resultMap>
+
+
+     <select id="findAll" resultType="syslog" >
+        SELECT  * from sysLog
+     </select>
+    <insert id="saveLog" parameterType="SysLog">
+      insert into syslog(visitTime,username,ip,url,executionTime,method) values(#{visitTime},#{username},#{ip},#{url},#{executionTime},#{method})
+    </insert>
+ </mapper>

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx" xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+ http://www.springframework.org/schema/beans/spring-beans.xsd
+ http://www.springframework.org/schema/tx
+ http://www.springframework.org/schema/tx/spring-tx.xsd
+ http://www.springframework.org/schema/aop
+ http://www.springframework.org/schema/aop/spring-aop.xsd
+ http://www.springframework.org/schema/context
+ http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <!--spring在创建bean之前要扫描的包-->
+
+    <context:component-scan base-package="com.itcast.dao"/>
+    <context:component-scan base-package="com.itcast.service.impl"/>
+
+
+    <!--引入外部jdbc配置文件-->
+    <context:property-placeholder location="classpath:jdbcConfig.properties"/>
+
+    <!--配置数据源-->
+    <bean class="com.mchange.v2.c3p0.ComboPooledDataSource" id="dataSource">
+        <property name="driverClass" value="${jdbc.driver}"/>
+        <property name="jdbcUrl" value="${jdbc.url}"/>
+        <property name="user" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+    </bean>
+
+    <!--配置sqlSessionFactoryBean-->
+    <bean class="org.mybatis.spring.SqlSessionFactoryBean" id="sessionFactory">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="typeAliasesPackage" value="com.itcast.domain"/>
+
+        <!--配置pageHelper插件-->
+        <property name="plugins">
+            <array>
+                <bean class="com.github.pagehelper.PageInterceptor">
+                    <property name="properties">
+                        <!--使用下面的方式配置参数，一行配置一个 -->
+                        <props>
+                            <!--配置数据库-->
+                            <prop key="helperDialect">oracle</prop>
+                            <!--配置reasonable ：分页合理化参数，默认值为 false 。
+                             true 时， pageNum<=0 时会查询第一 页，
+                             pageNum>pages （超过总数时），会查询最后一页。
+                             默认 false 时，直接根据参数进行查询。 -->
+                            <prop key="reasonable">true</prop>
+                        </props>
+                    </property>
+                </bean>
+            </array>
+        </property>
+    </bean>
+    <!--引入mapper-->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer" id="configurer">
+        <property name="basePackage" value="com.itcast.dao"/>
+    </bean>
+
+    <!--配置service层-->
+    <!--配置事务管理器-->
+    <bean class="org.springframework.jdbc.datasource.DataSourceTransactionManager" id="transactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+    <!--配置事务通知-->
+    <tx:advice id="advice" transaction-manager="transactionManager">
+        <tx:attributes>
+            <!--配置对应方法-->
+            <tx:method name="save*"/>
+            <tx:method name="delete*"/>
+            <tx:method name="update*"/>    <!--增删改采用默认配置 需要走事务-->
+            <tx:method name="find*" propagation="SUPPORTS" read-only="true"/>  <!--查询仅仅可读-->
+            <tx:method name="*"/>   <!--其他的方法默认走事务-->
+        </tx:attributes>
+    </tx:advice>
+    <!--配置漆面-->
+    <aop:config>
+        <aop:pointcut id="pt" expression="execution(* com.itcast.service.impl.*.*(..))"/>
+        <aop:advisor advice-ref="advice" pointcut-ref="pt"/>
+    </aop:config>
+
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+
+
+</beans>

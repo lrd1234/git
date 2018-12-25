@@ -1,0 +1,33 @@
+ <!DOCTYPE mapper
+         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ <mapper namespace="com.itcast.dao.RoleDao">
+    <resultMap id="roleMap" type="Role">
+        <id property="id" column="id"/>
+        <result property="roleName" column="roleName"/>
+        <result  property="roleDesc" column="roleDesc"/>
+        <collection property="permissions" column="id" select="com.itcast.dao.PermissionDao.findPermissionByRoleId"/>
+    </resultMap>
+
+     <select id="findByUserId" parameterType="String" resultMap="roleMap">
+         SELECT  * FROM role where id  in(select roleid from users_role where userid = #{id})
+     </select>
+
+
+    <select id="findAll" resultMap="roleMap" >
+        select * from role
+    </select>
+
+    <insert id="saveRole" parameterType="Role">
+        insert into role(roleName,roleDesc) VALUES (#{roleName},#{roleDesc})
+    </insert>
+    <select id="findOtherRole" resultMap="roleMap" parameterType="String">
+        select * from role where id not in (select roleid from users_role where userid = #{id})
+    </select>
+    <select id="findById" parameterType="String" resultMap="roleMap">
+        SELECT  * FROM role where id = #{id}
+    </select>
+    <insert id="addPermissionToRole" parameterType="role_permission">
+         INSERT  into role_permission(permissionId,roleId)values(#{permissionId},#{roleId})
+    </insert>
+ </mapper>
